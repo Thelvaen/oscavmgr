@@ -8,7 +8,11 @@ use super::bundle::AvatarBundle;
 use super::folders::CONFIG_DIR;
 use super::AvatarParameters;
 
-use openxr as xr;
+#[cfg(feature = "alvr")]
+use self::alvr::AlvrReceiver;
+
+#[cfg(feature = "openxr")]
+use self::openxr::OpenXrReceiver;
 
 const FILE_NAME: &str = "ExtThumbParams.json";
 
