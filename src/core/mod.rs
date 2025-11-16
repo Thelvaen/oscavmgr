@@ -25,7 +25,7 @@ mod ext_autopilot;
 mod ext_gogo;
 mod ext_oscjson;
 mod ext_storage;
-mod ext_thumb_params;
+//mod ext_thumb_params;
 mod ext_tracking;
 mod folders;
 mod watchdog;
@@ -55,7 +55,7 @@ pub struct AvatarOsc {
     ext_oscjson: ext_oscjson::ExtOscJson,
     ext_storage: ext_storage::ExtStorage,
     ext_gogo: ext_gogo::ExtGogo,
-    ext_thumb_params: ext_thumb_params::ExtThumbParams,
+    //ext_thumb_params: ext_thumb_params::ExtThumbParams,
     ext_tracking: ext_tracking::ExtTracking,
     multi: MultiProgress,
     avatar_file: Option<String>,
@@ -84,7 +84,7 @@ impl AvatarOsc {
         let ext_autopilot = ext_autopilot::ExtAutoPilot::new();
         let ext_storage = ext_storage::ExtStorage::new();
         let ext_gogo = ext_gogo::ExtGogo::new();
-        let ext_thumb_params = ext_thumb_params::ExtThumbParams::new();
+        //let ext_thumb_params = ext_thumb_params::ExtThumbParams::new();
         let ext_tracking = ext_tracking::ExtTracking::new(args.face);
         let ext_oscjson = ext_oscjson::ExtOscJson::new();
 
@@ -96,7 +96,7 @@ impl AvatarOsc {
             ext_oscjson,
             ext_storage,
             ext_gogo,
-            ext_thumb_params,
+            //ext_thumb_params,
             ext_tracking,
             multi,
             avatar_file: args.avatar,
@@ -274,7 +274,7 @@ impl AvatarOsc {
         self.ext_storage.step(&mut bundle);
         self.ext_tracking.step(state, &mut bundle);
         self.ext_gogo.step(&state.params, &mut bundle);
-        self.ext_thumb_params.step(&mut bundle);
+        //self.ext_thumb_params.step(&mut bundle);
         self.ext_autopilot
             .step(state, &self.ext_tracking, &mut bundle);
 

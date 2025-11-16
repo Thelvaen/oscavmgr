@@ -89,9 +89,11 @@ pub(super) struct XrState {
     view_space: xr::Space,
     eye_space: xr::Space,
     aim_spaces: [xr::Space; 2],
+    thumb_spaces: [xr::Space; 10],
     actions: xr::ActionSet,
     eye_action: xr::Action<xr::Posef>,
     aim_actions: [xr::Action<xr::Posef>; 2],
+    thumb_position: [xr::Action<xr::Posef>; 10],
     events: xr::EventDataBuffer,
     session_running: bool,
 
@@ -113,8 +115,34 @@ impl XrState {
             actions.create_action("right_aim", "Right Aim", &[])?,
         ];
 
+        // Defining actions for reading Thumb position
+        let thumb_position = [
+            actions.create_action("left_button_a_touch", "Left Button A Touch", &[])?,
+            actions.create_action("left_button_b_touch", "Left Button B Touch", &[])?,
+            actions.create_action("left_button_tp_touch", "Left Button Trackpad Touch", &[])?,
+            actions.create_action("left_button_ts_touch", "Left Button Thumbstick Touch", &[])?,
+            actions.create_action("left_trigger", "Left Trigger", &[])?,
+            actions.create_action("right_button_a_touch", "Right Button A Touch", &[])?,
+            actions.create_action("right_button_b_touch", "Right Button B Touch", &[])?,
+            actions.create_action("right_button_tp_touch", "Right Button Trackpad Touch", &[])?,
+            actions.create_action(
+                "right_button_ts_touch",
+                "Right Button Thumbstick Touch",
+                &[],
+            )?,
+            actions.create_action("right_trigger", "Right Trigger", &[])?,
+        ];
+
         let (session, frame_waiter, frame_stream) =
             unsafe { instance.create_session(system, &xr::headless::SessionCreateInfo {})? };
+
+        instance.suggest_interaction_profile_bindings(
+            instance.string_to_path("/interaction_profiles/ext/eye_gaze_interaction")?,
+            &[xr::Binding::new(
+                &eye_action,
+                instance.string_to_path("/user/eyes_ext/input/gaze_ext/pose")?,
+            )],
+        )?;
 
         instance.suggest_interaction_profile_bindings(
             instance.string_to_path("/interaction_profiles/khr/simple_controller")?,
@@ -130,12 +158,51 @@ impl XrState {
             ],
         )?;
 
+        // Defining bindings to read thumbs positions & trigger value
         instance.suggest_interaction_profile_bindings(
-            instance.string_to_path("/interaction_profiles/ext/eye_gaze_interaction")?,
-            &[xr::Binding::new(
-                &eye_action,
-                instance.string_to_path("/user/eyes_ext/input/gaze_ext/pose")?,
-            )],
+            instance.string_to_path("/interaction_profiles/khr/simple_controller")?,
+            &[
+                xr::Binding::new(
+                    &thumb_position[0],
+                    instance.string_to_path("/user/hand/left/input/a/touch")?,
+                ),
+                xr::Binding::new(
+                    &thumb_position[1],
+                    instance.string_to_path("/user/hand/left/input/b/touch")?,
+                ),
+                xr::Binding::new(
+                    &thumb_position[2],
+                    instance.string_to_path("/user/hand/left/input/trackpad/touch")?,
+                ),
+                xr::Binding::new(
+                    &thumb_position[3],
+                    instance.string_to_path("/user/hand/left/input/thumbstick/touch")?,
+                ),
+                xr::Binding::new(
+                    &thumb_position[4],
+                    instance.string_to_path("/user/hand/left/input/trigger/value")?,
+                ),
+                xr::Binding::new(
+                    &thumb_position[5],
+                    instance.string_to_path("/user/hand/right/input/a/touch")?,
+                ),
+                xr::Binding::new(
+                    &thumb_position[6],
+                    instance.string_to_path("/user/hand/right/input/b/touch")?,
+                ),
+                xr::Binding::new(
+                    &thumb_position[7],
+                    instance.string_to_path("/user/hand/right/input/trackpad/touch")?,
+                ),
+                xr::Binding::new(
+                    &thumb_position[8],
+                    instance.string_to_path("/user/hand/right/input/thumbstick/touch")?,
+                ),
+                xr::Binding::new(
+                    &thumb_position[9],
+                    instance.string_to_path("/user/hand/right/input/trigger/value")?,
+                ),
+            ],
         )?;
 
         session.attach_action_sets(&[&actions])?;
@@ -154,6 +221,19 @@ impl XrState {
             aim_actions[1].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
         ];
 
+        let thumb_spaces = [
+            thumb_position[0].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
+            thumb_position[1].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
+            thumb_position[2].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
+            thumb_position[3].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
+            thumb_position[4].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
+            thumb_position[5].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
+            thumb_position[6].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
+            thumb_position[7].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
+            thumb_position[8].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
+            thumb_position[9].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
+        ];
+
         let mut me = Self {
             instance,
             system,
@@ -166,9 +246,11 @@ impl XrState {
             view_space,
             eye_space,
             aim_spaces,
+            thumb_spaces,
             actions,
             eye_action,
             aim_actions,
+            thumb_position,
             events: xr::EventDataBuffer::new(),
             session_running: false,
             eyes_closed_frames: 0,
@@ -248,6 +330,10 @@ impl XrState {
         );
 
         self.session.sync_actions(&[(&self.actions).into()])?;
+
+        // Reading thumb position
+
+        // End of thumb position
 
         let hmd_loc = self.view_space.locate(&self.stage_space, next_frame)?;
         if hmd_loc
