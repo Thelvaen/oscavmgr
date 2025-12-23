@@ -5,7 +5,7 @@ use regex::Regex;
 use rosc::{OscBundle, OscType};
 use sranipal::SRanipalExpression;
 
-use crate::FaceSetup;
+use crate::{core::bundle::AvatarBundle, FaceSetup};
 
 #[cfg(feature = "alvr")]
 use self::alvr::AlvrReceiver;
@@ -159,6 +159,26 @@ impl ExtTracking {
         }
 
         self.data.apply_to_bundle(&mut self.params, bundle);
+
+        // Send thumb button positions
+        let button_names = [
+            "LeftA",
+            "LeftB",
+            "LeftTrackpad",
+            "LeftThumbstick",
+            "LeftTrigger",
+            "RightA",
+            "RightB",
+            "RightTrackpad",
+            "RightThumbstick",
+            "RightTrigger",
+        ];
+        for (i, value) in state.tracking.thumb_buttons.iter().enumerate() {
+            bundle.send_tracking(
+                &format!("/tracking/controllers/thumb/{}", button_names[i]),
+                vec![OscType::Float(*value)],
+            );
+        }
     }
 
     pub fn osc_json(&mut self, avatar_node: &OscJsonNode) {

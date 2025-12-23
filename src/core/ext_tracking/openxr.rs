@@ -89,11 +89,12 @@ pub(super) struct XrState {
     view_space: xr::Space,
     eye_space: xr::Space,
     aim_spaces: [xr::Space; 2],
-    thumb_spaces: [xr::Space; 10],
     actions: xr::ActionSet,
     eye_action: xr::Action<xr::Posef>,
     aim_actions: [xr::Action<xr::Posef>; 2],
-    thumb_position: [xr::Action<xr::Posef>; 10],
+    thumb_actions: [xr::Action<f32>; 10],
+    prev_thumb_states: [f32; 10],
+    controller_type: String,
     events: xr::EventDataBuffer,
     session_running: bool,
 
@@ -115,8 +116,8 @@ impl XrState {
             actions.create_action("right_aim", "Right Aim", &[])?,
         ];
 
-        // Defining actions for reading Thumb position
-        let thumb_position = [
+        // Defining actions for reading Thumb position and trigger values
+        let thumb_actions = [
             actions.create_action("left_button_a_touch", "Left Button A Touch", &[])?,
             actions.create_action("left_button_b_touch", "Left Button B Touch", &[])?,
             actions.create_action("left_button_tp_touch", "Left Button Trackpad Touch", &[])?,
@@ -158,54 +159,129 @@ impl XrState {
             ],
         )?;
 
-        // Defining bindings to read thumbs positions & trigger value
-        instance.suggest_interaction_profile_bindings(
-            instance.string_to_path("/interaction_profiles/khr/simple_controller")?,
-            &[
-                xr::Binding::new(
-                    &thumb_position[0],
-                    instance.string_to_path("/user/hand/left/input/a/touch")?,
-                ),
-                xr::Binding::new(
-                    &thumb_position[1],
-                    instance.string_to_path("/user/hand/left/input/b/touch")?,
-                ),
-                xr::Binding::new(
-                    &thumb_position[2],
-                    instance.string_to_path("/user/hand/left/input/trackpad/touch")?,
-                ),
-                xr::Binding::new(
-                    &thumb_position[3],
-                    instance.string_to_path("/user/hand/left/input/thumbstick/touch")?,
-                ),
-                xr::Binding::new(
-                    &thumb_position[4],
-                    instance.string_to_path("/user/hand/left/input/trigger/value")?,
-                ),
-                xr::Binding::new(
-                    &thumb_position[5],
-                    instance.string_to_path("/user/hand/right/input/a/touch")?,
-                ),
-                xr::Binding::new(
-                    &thumb_position[6],
-                    instance.string_to_path("/user/hand/right/input/b/touch")?,
-                ),
-                xr::Binding::new(
-                    &thumb_position[7],
-                    instance.string_to_path("/user/hand/right/input/trackpad/touch")?,
-                ),
-                xr::Binding::new(
-                    &thumb_position[8],
-                    instance.string_to_path("/user/hand/right/input/thumbstick/touch")?,
-                ),
-                xr::Binding::new(
-                    &thumb_position[9],
-                    instance.string_to_path("/user/hand/right/input/trigger/value")?,
-                ),
-            ],
-        )?;
+        // Add thumb button bindings for Meta Quest Touch controllers (Quest 2, Quest Pro)
+        instance
+            .suggest_interaction_profile_bindings(
+                instance.string_to_path("/interaction_profiles/oculus/touch_controller")?,
+                &[
+                    xr::Binding::new(
+                        &aim_actions[0],
+                        instance.string_to_path("/user/hand/left/input/aim/pose")?,
+                    ),
+                    xr::Binding::new(
+                        &aim_actions[1],
+                        instance.string_to_path("/user/hand/right/input/aim/pose")?,
+                    ),
+                    // Left hand buttons
+                    xr::Binding::new(
+                        &thumb_actions[0],
+                        instance.string_to_path("/user/hand/left/input/x/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[1],
+                        instance.string_to_path("/user/hand/left/input/y/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[2],
+                        instance.string_to_path("/user/hand/left/input/thumbrest/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[3],
+                        instance.string_to_path("/user/hand/left/input/thumbstick/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[4],
+                        instance.string_to_path("/user/hand/left/input/trigger/value")?,
+                    ),
+                    // Right hand buttons
+                    xr::Binding::new(
+                        &thumb_actions[5],
+                        instance.string_to_path("/user/hand/right/input/a/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[6],
+                        instance.string_to_path("/user/hand/right/input/b/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[7],
+                        instance.string_to_path("/user/hand/right/input/thumbrest/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[8],
+                        instance.string_to_path("/user/hand/right/input/thumbstick/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[9],
+                        instance.string_to_path("/user/hand/right/input/trigger/value")?,
+                    ),
+                ],
+            )
+            .ok(); // Ignore errors for unsupported profiles
+
+        // Add thumb button bindings for Valve Index controllers
+        instance
+            .suggest_interaction_profile_bindings(
+                instance.string_to_path("/interaction_profiles/valve/index_controller")?,
+                &[
+                    xr::Binding::new(
+                        &aim_actions[0],
+                        instance.string_to_path("/user/hand/left/input/aim/pose")?,
+                    ),
+                    xr::Binding::new(
+                        &aim_actions[1],
+                        instance.string_to_path("/user/hand/right/input/aim/pose")?,
+                    ),
+                    // Left hand buttons
+                    xr::Binding::new(
+                        &thumb_actions[0],
+                        instance.string_to_path("/user/hand/left/input/a/click")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[1],
+                        instance.string_to_path("/user/hand/left/input/b/click")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[2],
+                        instance.string_to_path("/user/hand/left/input/trackpad/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[3],
+                        instance.string_to_path("/user/hand/left/input/thumbstick/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[4],
+                        instance.string_to_path("/user/hand/left/input/trigger/value")?,
+                    ),
+                    // Right hand buttons
+                    xr::Binding::new(
+                        &thumb_actions[5],
+                        instance.string_to_path("/user/hand/right/input/a/click")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[6],
+                        instance.string_to_path("/user/hand/right/input/b/click")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[7],
+                        instance.string_to_path("/user/hand/right/input/trackpad/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[8],
+                        instance.string_to_path("/user/hand/right/input/thumbstick/touch")?,
+                    ),
+                    xr::Binding::new(
+                        &thumb_actions[9],
+                        instance.string_to_path("/user/hand/right/input/trigger/value")?,
+                    ),
+                ],
+            )
+            .ok(); // Ignore errors for unsupported profiles
 
         session.attach_action_sets(&[&actions])?;
+
+        // Detect controller type
+        let controller_type = Self::detect_controller_type(&instance, &session)?;
+        log::info!("Detected controller type: {}", controller_type);
 
         let stage_space =
             session.create_reference_space(xr::ReferenceSpaceType::STAGE, xr::Posef::IDENTITY)?;
@@ -221,19 +297,6 @@ impl XrState {
             aim_actions[1].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
         ];
 
-        let thumb_spaces = [
-            thumb_position[0].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
-            thumb_position[1].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
-            thumb_position[2].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
-            thumb_position[3].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
-            thumb_position[4].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
-            thumb_position[5].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
-            thumb_position[6].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
-            thumb_position[7].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
-            thumb_position[8].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
-            thumb_position[9].create_space(session.clone(), xr::Path::NULL, xr::Posef::IDENTITY)?,
-        ];
-
         let mut me = Self {
             instance,
             system,
@@ -246,11 +309,12 @@ impl XrState {
             view_space,
             eye_space,
             aim_spaces,
-            thumb_spaces,
             actions,
             eye_action,
             aim_actions,
-            thumb_position,
+            thumb_actions,
+            prev_thumb_states: [0.0; 10],
+            controller_type,
             events: xr::EventDataBuffer::new(),
             session_running: false,
             eyes_closed_frames: 0,
@@ -264,6 +328,49 @@ impl XrState {
             .ok();
 
         Ok(me)
+    }
+
+    fn detect_controller_type(
+        instance: &xr::Instance,
+        session: &xr::Session<xr::Headless>,
+    ) -> anyhow::Result<String> {
+        // Try to get the current interaction profile to identify controller type
+        let profiles = [
+            (
+                "/interaction_profiles/oculus/touch_controller",
+                "Meta Quest Touch",
+            ),
+            (
+                "/interaction_profiles/valve/index_controller",
+                "Valve Index",
+            ),
+            (
+                "/interaction_profiles/khr/simple_controller",
+                "Simple Controller",
+            ),
+        ];
+
+        // Attempt to get current interaction profile for left hand
+        if let Ok(profile_path) =
+            session.current_interaction_profile(instance.string_to_path("/user/hand/left")?)
+        {
+            // Check if we got a valid path (not NULL_PATH)
+            if let Ok(profile_str) = instance.path_to_string(profile_path) {
+                log::debug!("Current interaction profile: {}", profile_str);
+
+                for (path, name) in &profiles {
+                    if profile_str.contains(path) {
+                        return Ok(name.to_string());
+                    }
+                }
+            } else {
+                log::debug!("No active interaction profile yet (NULL_PATH)");
+            }
+        }
+
+        // Fallback: return Pending if we can't determine the profile
+        log::debug!("Controller type detection: returning Pending");
+        Ok("Pending".to_string())
     }
 
     fn load_properties<T>(&self, next: *mut T) -> xr::Result<()> {
@@ -332,7 +439,48 @@ impl XrState {
         self.session.sync_actions(&[(&self.actions).into()])?;
 
         // Reading thumb position
+        let button_names = [
+            "LeftA",
+            "LeftB",
+            "LeftTrackpad",
+            "LeftThumbstick",
+            "LeftTrigger",
+            "RightA",
+            "RightB",
+            "RightTrackpad",
+            "RightThumbstick",
+            "RightTrigger",
+        ];
+        for (i, action) in self.thumb_actions.iter().enumerate() {
+            match action.state(&self.session, xr::Path::NULL) {
+                Ok(action_state) => {
+                    // Float actions for touch and trigger values
+                    // clamp to [0.0, 1.0] range
+                    let value = action_state.current_state.clamp(0.0, 1.0);
+                    state.tracking.thumb_buttons[i] = value;
 
+                    // Debug logging for state transitions
+                    let prev = self.prev_thumb_states[i];
+                    let is_active_now = value > 0.1;
+                    let was_active = prev > 0.1;
+
+                    if is_active_now && !was_active {
+                        log::debug!(
+                            "Thumb button pressed: {} (value: {:.2})",
+                            button_names[i],
+                            value
+                        );
+                    } else if !is_active_now && was_active {
+                        log::debug!("Thumb button released: {}", button_names[i]);
+                    }
+
+                    self.prev_thumb_states[i] = value;
+                }
+                Err(e) => {
+                    log::trace!("Failed to get state for {}: {:?}", button_names[i], e);
+                }
+            }
+        }
         // End of thumb position
 
         let hmd_loc = self.view_space.locate(&self.stage_space, next_frame)?;

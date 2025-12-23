@@ -66,6 +66,8 @@ pub struct OscTrack {
     pub left_hand: Affine3A,
     pub right_hand: Affine3A,
     pub last_received: Instant,
+    // Thumb button positions: [left_a, left_b, left_trackpad, left_thumbstick, left_trigger, right_a, right_b, right_trackpad, right_thumbstick, right_trigger]
+    pub thumb_buttons: [f32; 10],
 }
 
 impl AvatarOsc {
@@ -124,6 +126,7 @@ impl AvatarOsc {
                 left_hand: Affine3A::IDENTITY,
                 right_hand: Affine3A::IDENTITY,
                 last_received: Instant::now(),
+                thumb_buttons: [0.0; 10],
             },
             self_drive: Arc::new(AtomicBool::new(true)),
             delta_t: 0.011f32,
