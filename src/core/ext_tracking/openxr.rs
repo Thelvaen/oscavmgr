@@ -16,7 +16,7 @@ use crate::core::{AppState, INSTRUCTIONS_END, INSTRUCTIONS_START, TRACK_ON};
 use super::{
     htc::{htc_to_unified, HtcFacialData},
     unified::{UnifiedExpressions, UnifiedShapeAccessors, UnifiedTrackingData},
-    FaceReceiver,
+    FaceReceiver, ThumbAction,
 };
 
 static STA_GAZE: Lazy<Arc<str>> = Lazy::new(|| format!("{}", "GAZE".color(Color::Green)).into());
@@ -175,44 +175,44 @@ impl XrState {
                     ),
                     // Left hand buttons
                     xr::Binding::new(
-                        &thumb_actions[0],
+                        &thumb_actions[ThumbAction::LeftButtonA as usize],
                         instance.string_to_path("/user/hand/left/input/x/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[1],
+                        &thumb_actions[ThumbAction::LeftButtonB as usize],
                         instance.string_to_path("/user/hand/left/input/y/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[2],
+                        &thumb_actions[ThumbAction::LeftButtonTrackpad as usize],
                         instance.string_to_path("/user/hand/left/input/thumbrest/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[3],
+                        &thumb_actions[ThumbAction::LeftButtonThumbstick as usize],
                         instance.string_to_path("/user/hand/left/input/thumbstick/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[4],
+                        &thumb_actions[ThumbAction::LeftTrigger as usize],
                         instance.string_to_path("/user/hand/left/input/trigger/value")?,
                     ),
                     // Right hand buttons
                     xr::Binding::new(
-                        &thumb_actions[5],
+                        &thumb_actions[ThumbAction::RightButtonA as usize],
                         instance.string_to_path("/user/hand/right/input/a/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[6],
+                        &thumb_actions[ThumbAction::RightButtonB as usize],
                         instance.string_to_path("/user/hand/right/input/b/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[7],
+                        &thumb_actions[ThumbAction::RightButtonTrackpad as usize],
                         instance.string_to_path("/user/hand/right/input/thumbrest/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[8],
+                        &thumb_actions[ThumbAction::RightButtonThumbstick as usize],
                         instance.string_to_path("/user/hand/right/input/thumbstick/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[9],
+                        &thumb_actions[ThumbAction::RightTrigger as usize],
                         instance.string_to_path("/user/hand/right/input/trigger/value")?,
                     ),
                 ],
@@ -234,44 +234,44 @@ impl XrState {
                     ),
                     // Left hand buttons
                     xr::Binding::new(
-                        &thumb_actions[0],
-                        instance.string_to_path("/user/hand/left/input/a/click")?,
+                        &thumb_actions[ThumbAction::LeftButtonA as usize],
+                        instance.string_to_path("/user/hand/left/input/a/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[1],
-                        instance.string_to_path("/user/hand/left/input/b/click")?,
+                        &thumb_actions[ThumbAction::LeftButtonB as usize],
+                        instance.string_to_path("/user/hand/left/input/b/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[2],
+                        &thumb_actions[ThumbAction::LeftButtonTrackpad as usize],
                         instance.string_to_path("/user/hand/left/input/trackpad/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[3],
+                        &thumb_actions[ThumbAction::LeftButtonThumbstick as usize],
                         instance.string_to_path("/user/hand/left/input/thumbstick/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[4],
+                        &thumb_actions[ThumbAction::LeftTrigger as usize],
                         instance.string_to_path("/user/hand/left/input/trigger/value")?,
                     ),
                     // Right hand buttons
                     xr::Binding::new(
-                        &thumb_actions[5],
-                        instance.string_to_path("/user/hand/right/input/a/click")?,
+                        &thumb_actions[ThumbAction::RightButtonA as usize],
+                        instance.string_to_path("/user/hand/right/input/a/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[6],
-                        instance.string_to_path("/user/hand/right/input/b/click")?,
+                        &thumb_actions[ThumbAction::RightButtonB as usize],
+                        instance.string_to_path("/user/hand/right/input/b/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[7],
+                        &thumb_actions[ThumbAction::RightButtonTrackpad as usize],
                         instance.string_to_path("/user/hand/right/input/trackpad/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[8],
+                        &thumb_actions[ThumbAction::RightButtonThumbstick as usize],
                         instance.string_to_path("/user/hand/right/input/thumbstick/touch")?,
                     ),
                     xr::Binding::new(
-                        &thumb_actions[9],
+                        &thumb_actions[ThumbAction::RightTrigger as usize],
                         instance.string_to_path("/user/hand/right/input/trigger/value")?,
                     ),
                 ],

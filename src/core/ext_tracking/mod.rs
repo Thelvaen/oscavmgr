@@ -38,6 +38,21 @@ mod openxr;
 mod sranipal;
 pub mod unified;
 
+#[repr(usize)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, EnumCount)]
+enum ThumbAction {
+    LeftButtonA = 0,
+    LeftButtonB = 1,
+    LeftButtonTrackpad = 2,
+    LeftButtonThumbstick = 3,
+    LeftTrigger = 4,
+    RightButtonA = 5,
+    RightButtonB = 6,
+    RightButtonTrackpad = 7,
+    RightButtonThumbstick = 8,
+    RightTrigger = 9,
+}
+
 trait FaceReceiver {
     fn start_loop(&mut self);
     fn receive(&mut self, _data: &mut UnifiedTrackingData, _: &mut AppState);
@@ -179,32 +194,32 @@ impl ExtTracking {
 
         // Left thumb: determine which button is pressed
         let mut left_thumb_value = 0i32;
-        if state.tracking.thumb_buttons[0] > 0.1 {
+        if state.tracking.thumb_buttons[ThumbAction::LeftButtonA as usize] > 0.1 {
             left_thumb_value = 1; // Button A
         }
-        if state.tracking.thumb_buttons[1] > 0.1 {
+        if state.tracking.thumb_buttons[ThumbAction::LeftButtonB as usize] > 0.1 {
             left_thumb_value = 2; // Button B (priority over A)
         }
-        if state.tracking.thumb_buttons[2] > 0.1 {
+        if state.tracking.thumb_buttons[ThumbAction::LeftButtonTrackpad as usize] > 0.1 {
             left_thumb_value = 3; // Trackpad
         }
-        if state.tracking.thumb_buttons[3] > 0.1 {
+        if state.tracking.thumb_buttons[ThumbAction::LeftButtonThumbstick as usize] > 0.1 {
             left_thumb_value = 4; // Thumbstick
         }
         bundle.send_parameter("LeftThumb", OscType::Int(left_thumb_value));
 
         // Right thumb: determine which button is pressed
         let mut right_thumb_value = 0i32;
-        if state.tracking.thumb_buttons[5] > 0.1 {
+        if state.tracking.thumb_buttons[ThumbAction::RightButtonA as usize] > 0.1 {
             right_thumb_value = 1; // Button A
         }
-        if state.tracking.thumb_buttons[6] > 0.1 {
+        if state.tracking.thumb_buttons[ThumbAction::RightButtonB as usize] > 0.1 {
             right_thumb_value = 2; // Button B (priority over A)
         }
-        if state.tracking.thumb_buttons[7] > 0.1 {
+        if state.tracking.thumb_buttons[ThumbAction::RightButtonTrackpad as usize] > 0.1 {
             right_thumb_value = 3; // Trackpad
         }
-        if state.tracking.thumb_buttons[8] > 0.1 {
+        if state.tracking.thumb_buttons[ThumbAction::RightButtonThumbstick as usize] > 0.1 {
             right_thumb_value = 4; // Thumbstick
         }
         bundle.send_parameter("RightThumb", OscType::Int(right_thumb_value));
@@ -212,11 +227,11 @@ impl ExtTracking {
         // Send triggers as floats
         bundle.send_parameter(
             "LeftTrigger",
-            OscType::Float(state.tracking.thumb_buttons[4]),
+            OscType::Float(state.tracking.thumb_buttons[ThumbAction::LeftTrigger as usize]),
         );
         bundle.send_parameter(
             "RightTrigger",
-            OscType::Float(state.tracking.thumb_buttons[9]),
+            OscType::Float(state.tracking.thumb_buttons[ThumbAction::RightTrigger as usize]),
         );
     }
 
