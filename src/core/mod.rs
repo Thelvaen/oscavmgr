@@ -25,6 +25,7 @@ mod ext_autopilot;
 mod ext_gogo;
 mod ext_oscjson;
 mod ext_storage;
+//mod ext_thumb_params;
 mod ext_tracking;
 mod folders;
 mod watchdog;
@@ -54,6 +55,7 @@ pub struct AvatarOsc {
     ext_oscjson: ext_oscjson::ExtOscJson,
     ext_storage: ext_storage::ExtStorage,
     ext_gogo: ext_gogo::ExtGogo,
+    //ext_thumb_params: ext_thumb_params::ExtThumbParams,
     ext_tracking: ext_tracking::ExtTracking,
     multi: MultiProgress,
     avatar_file: Option<String>,
@@ -64,11 +66,18 @@ pub struct OscTrack {
     pub left_hand: Affine3A,
     pub right_hand: Affine3A,
     pub last_received: Instant,
+    // Thumb button positions: [left_a, left_b, left_trackpad, left_thumbstick, left_trigger, right_a, right_b, right_trackpad, right_thumbstick, right_trigger]
+    pub thumb_buttons: [f32; 10],
+    pub controller_type: String,
 }
 
 impl AvatarOsc {
     pub fn new(args: Args, multi: MultiProgress) -> AvatarOsc {
-        let ip = IpAddr::V4(if args.expose {Ipv4Addr::UNSPECIFIED} else {Ipv4Addr::LOCALHOST});
+        let ip = IpAddr::V4(if args.expose {
+            Ipv4Addr::UNSPECIFIED
+        } else {
+            Ipv4Addr::LOCALHOST
+        });
 
         let upstream = UdpSocket::bind("0.0.0.0:0").expect("bind upstream socket");
         upstream
@@ -78,6 +87,7 @@ impl AvatarOsc {
         let ext_autopilot = ext_autopilot::ExtAutoPilot::new();
         let ext_storage = ext_storage::ExtStorage::new();
         let ext_gogo = ext_gogo::ExtGogo::new();
+        //let ext_thumb_params = ext_thumb_params::ExtThumbParams::new();
         let ext_tracking = ext_tracking::ExtTracking::new(args.face);
         let ext_oscjson = ext_oscjson::ExtOscJson::new();
 
@@ -89,6 +99,7 @@ impl AvatarOsc {
             ext_oscjson,
             ext_storage,
             ext_gogo,
+            //ext_thumb_params,
             ext_tracking,
             multi,
             avatar_file: args.avatar,
@@ -116,6 +127,8 @@ impl AvatarOsc {
                 left_hand: Affine3A::IDENTITY,
                 right_hand: Affine3A::IDENTITY,
                 last_received: Instant::now(),
+                thumb_buttons: [0.0; 10],
+                controller_type: "Pending".to_string(),
             },
             self_drive: Arc::new(AtomicBool::new(true)),
             delta_t: 0.011f32,
@@ -266,6 +279,7 @@ impl AvatarOsc {
         self.ext_storage.step(&mut bundle);
         self.ext_tracking.step(state, &mut bundle);
         self.ext_gogo.step(&state.params, &mut bundle);
+        //self.ext_thumb_params.step(&mut bundle);
         self.ext_autopilot
             .step(state, &self.ext_tracking, &mut bundle);
 
