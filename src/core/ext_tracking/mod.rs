@@ -175,64 +175,66 @@ impl ExtTracking {
 
         self.data.apply_to_bundle(&mut self.params, bundle);
 
-        // Send controller type
-        let controller_type_int = match state.tracking.controller_type.as_str() {
-            "Valve Index" => 1,
-            "Meta Quest Touch" => 2,
-            _ => 0, // Other/Pending
-        };
-        log::debug!(
-            "Sending ControllerType: {} ({})",
-            state.tracking.controller_type,
-            controller_type_int
-        );
-        bundle.send_parameter("ControllerType", OscType::Int(controller_type_int));
+        if state.thumb_params {
+            // Send controller type
+            let controller_type_int = match state.tracking.controller_type.as_str() {
+                "Valve Index" => 1,
+                "Meta Quest Touch" => 2,
+                _ => 0, // Other/Pending
+            };
+            log::debug!(
+                "Sending ControllerType: {} ({})",
+                state.tracking.controller_type,
+                controller_type_int
+            );
+            bundle.send_parameter("ControllerType", OscType::Int(controller_type_int));
 
-        // Send thumb buttons with button mapping logic
-        // Left hand buttons: indices 0-4 (A, B, Trackpad, Thumbstick, Trigger)
-        // Right hand buttons: indices 5-9 (A, B, Trackpad, Thumbstick, Trigger)
+            // Send thumb buttons with button mapping logic
+            // Left hand buttons: indices 0-4 (A, B, Trackpad, Thumbstick, Trigger)
+            // Right hand buttons: indices 5-9 (A, B, Trackpad, Thumbstick, Trigger)
 
-        // Left thumb: determine which button is pressed
-        let mut left_thumb_value = 0i32;
-        if state.tracking.thumb_buttons[ThumbAction::LeftButtonA as usize] > 0.1 {
-            left_thumb_value = 1; // Button A
-        }
-        if state.tracking.thumb_buttons[ThumbAction::LeftButtonB as usize] > 0.1 {
-            left_thumb_value = 2; // Button B (priority over A)
-        }
-        if state.tracking.thumb_buttons[ThumbAction::LeftButtonTrackpad as usize] > 0.1 {
-            left_thumb_value = 3; // Trackpad
-        }
-        if state.tracking.thumb_buttons[ThumbAction::LeftButtonThumbstick as usize] > 0.1 {
-            left_thumb_value = 4; // Thumbstick
-        }
-        bundle.send_parameter("LeftThumb", OscType::Int(left_thumb_value));
+            // Left thumb: determine which button is pressed
+            let mut left_thumb_value = 0i32;
+            if state.tracking.thumb_buttons[ThumbAction::LeftButtonA as usize] > 0.1 {
+                left_thumb_value = 1; // Button A
+            }
+            if state.tracking.thumb_buttons[ThumbAction::LeftButtonB as usize] > 0.1 {
+                left_thumb_value = 2; // Button B (priority over A)
+            }
+            if state.tracking.thumb_buttons[ThumbAction::LeftButtonTrackpad as usize] > 0.1 {
+                left_thumb_value = 3; // Trackpad
+            }
+            if state.tracking.thumb_buttons[ThumbAction::LeftButtonThumbstick as usize] > 0.1 {
+                left_thumb_value = 4; // Thumbstick
+            }
+            bundle.send_parameter("LeftThumb", OscType::Int(left_thumb_value));
 
-        // Right thumb: determine which button is pressed
-        let mut right_thumb_value = 0i32;
-        if state.tracking.thumb_buttons[ThumbAction::RightButtonA as usize] > 0.1 {
-            right_thumb_value = 1; // Button A
-        }
-        if state.tracking.thumb_buttons[ThumbAction::RightButtonB as usize] > 0.1 {
-            right_thumb_value = 2; // Button B (priority over A)
-        }
-        if state.tracking.thumb_buttons[ThumbAction::RightButtonTrackpad as usize] > 0.1 {
-            right_thumb_value = 3; // Trackpad
-        }
-        if state.tracking.thumb_buttons[ThumbAction::RightButtonThumbstick as usize] > 0.1 {
-            right_thumb_value = 4; // Thumbstick
-        }
-        bundle.send_parameter("RightThumb", OscType::Int(right_thumb_value));
+            // Right thumb: determine which button is pressed
+            let mut right_thumb_value = 0i32;
+            if state.tracking.thumb_buttons[ThumbAction::RightButtonA as usize] > 0.1 {
+                right_thumb_value = 1; // Button A
+            }
+            if state.tracking.thumb_buttons[ThumbAction::RightButtonB as usize] > 0.1 {
+                right_thumb_value = 2; // Button B (priority over A)
+            }
+            if state.tracking.thumb_buttons[ThumbAction::RightButtonTrackpad as usize] > 0.1 {
+                right_thumb_value = 3; // Trackpad
+            }
+            if state.tracking.thumb_buttons[ThumbAction::RightButtonThumbstick as usize] > 0.1 {
+                right_thumb_value = 4; // Thumbstick
+            }
+            bundle.send_parameter("RightThumb", OscType::Int(right_thumb_value));
 
-        // Send triggers as floats
-        bundle.send_parameter(
-            "LeftTrigger",
-            OscType::Float(state.tracking.thumb_buttons[ThumbAction::LeftTrigger as usize]),
-        );
-        bundle.send_parameter(
-            "RightTrigger",
-            OscType::Float(state.tracking.thumb_buttons[ThumbAction::RightTrigger as usize]),
-        );
+            // Send triggers as floats
+            bundle.send_parameter(
+                "LeftTrigger",
+                OscType::Float(state.tracking.thumb_buttons[ThumbAction::LeftTrigger as usize]),
+            );
+            bundle.send_parameter(
+                "RightTrigger",
+                OscType::Float(state.tracking.thumb_buttons[ThumbAction::RightTrigger as usize]),
+            );
+        }
     }
 
     pub fn osc_json(&mut self, avatar_node: &OscJsonNode) {

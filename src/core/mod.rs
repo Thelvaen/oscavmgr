@@ -44,6 +44,7 @@ pub struct AppState {
     pub status: status::StatusBar,
     pub self_drive: Arc<AtomicBool>,
     pub delta_t: f32,
+    pub thumb_params: bool,
 }
 
 pub struct AvatarOsc {
@@ -57,6 +58,7 @@ pub struct AvatarOsc {
     ext_tracking: ext_tracking::ExtTracking,
     multi: MultiProgress,
     avatar_file: Option<String>,
+    thumb_params: bool,
 }
 
 pub struct OscTrack {
@@ -98,6 +100,7 @@ impl AvatarOsc {
             ext_tracking,
             multi,
             avatar_file: args.avatar,
+            thumb_params: args.thumb_params,
         }
     }
 
@@ -127,6 +130,7 @@ impl AvatarOsc {
             },
             self_drive: Arc::new(AtomicBool::new(true)),
             delta_t: 0.011f32,
+            thumb_params: self.thumb_params,
         };
 
         let watchdog = watchdog::Watchdog::new(state.self_drive.clone());

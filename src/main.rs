@@ -71,4 +71,8 @@ pub struct Args {
     /// The OSC-JSON avatar file to use. See ~/.config/oscavmgr-avatar.json
     #[arg(long)]
     avatar: Option<String>,
+
+    // Thumbparams toggle option
+    #[arg(long, default_value_t = false)]
+    thumb_params: bool,
 }
