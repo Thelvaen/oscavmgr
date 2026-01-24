@@ -53,6 +53,14 @@ enum ThumbAction {
     RightTrigger = 9,
 }
 
+struct ThumbStates {
+    left_thumb: Option<i32>,
+    right_thumb: Option<i32>,
+    left_trigger: Option<f32>,
+    right_trigger: Option<f32>,
+    controller_type: Option<i32>,
+}
+
 trait FaceReceiver {
     fn start_loop(&mut self);
     fn receive(&mut self, _data: &mut UnifiedTrackingData, _: &mut AppState);
@@ -69,6 +77,7 @@ pub struct ExtTracking {
     pub data: UnifiedTrackingData,
     params: [Option<MysteryParam>; NUM_SHAPES],
     receiver: Box<dyn FaceReceiver>,
+    thumb_states: ThumbStates,
 }
 
 impl ExtTracking {
@@ -143,6 +152,13 @@ impl ExtTracking {
             data: UnifiedTrackingData::default(),
             params,
             receiver,
+            thumb_states: ThumbStates {
+                left_thumb: None,
+                right_thumb: None,
+                left_trigger: None,
+                right_trigger: None,
+                controller_type: None,
+            },
         };
 
         log::info!("--- Default params ---");
@@ -187,7 +203,6 @@ impl ExtTracking {
                 state.tracking.controller_type,
                 controller_type_int
             );
-            bundle.send_parameter("ControllerType", OscType::Int(controller_type_int));
 
             // Send thumb buttons with button mapping logic
             // Left hand buttons: indices 0-4 (A, B, Trackpad, Thumbstick, Trigger)
@@ -207,7 +222,6 @@ impl ExtTracking {
             if state.tracking.thumb_buttons[ThumbAction::LeftButtonThumbstick as usize] > 0.1 {
                 left_thumb_value = 4; // Thumbstick
             }
-            bundle.send_parameter("LeftThumb", OscType::Int(left_thumb_value));
 
             // Right thumb: determine which button is pressed
             let mut right_thumb_value = 0i32;
@@ -223,17 +237,48 @@ impl ExtTracking {
             if state.tracking.thumb_buttons[ThumbAction::RightButtonThumbstick as usize] > 0.1 {
                 right_thumb_value = 4; // Thumbstick
             }
-            bundle.send_parameter("RightThumb", OscType::Int(right_thumb_value));
+
+            // Send values only if they have changed
+            // Controller type as int
+            if self.thumb_states.controller_type != Some(controller_type_int) {
+                self.thumb_states.controller_type = Some(controller_type_int);
+                bundle.send_parameter("ControllerType", OscType::Int(controller_type_int));
+            }
+
+            // Send thumb button states as ints
+            if self.thumb_states.left_thumb != Some(left_thumb_value) {
+                self.thumb_states.left_thumb = Some(left_thumb_value);
+                bundle.send_parameter("LeftThumb", OscType::Int(left_thumb_value));
+            }
+
+            if self.thumb_states.right_thumb != Some(right_thumb_value) {
+                self.thumb_states.right_thumb = Some(right_thumb_value);
+                bundle.send_parameter("RightThumb", OscType::Int(right_thumb_value));
+            }
 
             // Send triggers as floats
-            bundle.send_parameter(
-                "LeftTrigger",
-                OscType::Float(state.tracking.thumb_buttons[ThumbAction::LeftTrigger as usize]),
-            );
-            bundle.send_parameter(
-                "RightTrigger",
-                OscType::Float(state.tracking.thumb_buttons[ThumbAction::RightTrigger as usize]),
-            );
+            if self.thumb_states.right_trigger
+                != Some(state.tracking.thumb_buttons[ThumbAction::RightTrigger as usize])
+            {
+                self.thumb_states.right_trigger =
+                    Some(state.tracking.thumb_buttons[ThumbAction::RightTrigger as usize]);
+                bundle.send_parameter(
+                    "RightTrigger",
+                    OscType::Float(
+                        state.tracking.thumb_buttons[ThumbAction::RightTrigger as usize],
+                    ),
+                );
+            }
+            if self.thumb_states.left_trigger
+                != Some(state.tracking.thumb_buttons[ThumbAction::LeftTrigger as usize])
+            {
+                self.thumb_states.left_trigger =
+                    Some(state.tracking.thumb_buttons[ThumbAction::LeftTrigger as usize]);
+                bundle.send_parameter(
+                    "LeftTrigger",
+                    OscType::Float(state.tracking.thumb_buttons[ThumbAction::LeftTrigger as usize]),
+                );
+            }
         }
     }
 
