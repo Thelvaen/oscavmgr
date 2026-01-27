@@ -292,6 +292,13 @@ impl ExtTracking {
 
         self.process_node_recursive("parameters", parameters);
         self.print_params();
+        self.thumb_states = ThumbStates {
+            left_thumb: None,
+            right_thumb: None,
+            left_trigger: None,
+            right_trigger: None,
+            controller_type: None,
+        };
     }
 
     fn process_node_recursive(&mut self, name: &str, node: &OscJsonNode) -> Option<()> {
